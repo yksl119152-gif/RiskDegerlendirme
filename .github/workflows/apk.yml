@@ -1,0 +1,53 @@
+name: APK Derle
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  derle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Depoyu al
+        uses: actions/checkout@v4
+
+      - name: Zip dosyasini ac
+        run: |
+          ZIP=$(ls *.zip | head -1)
+          echo "Bulunan zip: $ZIP"
+          unzip -o -q "$ZIP" -d proje
+          DIZIN=$(dirname "$(find proje -name settings.gradle | head -1)")
+          echo "PROJE=$DIZIN" >> $GITHUB_ENV
+
+      - name: Java 17 kur
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Gradle kur
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: APK olustur
+        run: |
+          cd "$PROJE"
+          gradle assembleDebug --no-daemon --stacktrace
+          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/Duzce_Risk_Degerlendirme.apk"
+
+      - name: APK'yi Actions sayfasina koy
+        uses: actions/upload-artifact@v4
+        with:
+          name: Duzce_Risk_Degerlendirme_APK
+          path: Duzce_Risk_Degerlendirme.apk
+
+      - name: APK'yi Releases sayfasina koy (dogrudan indirme)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: surum-${{ github.run_number }}
+          name: Risk Degerlendirme APK ${{ github.run_number }}
+          files: Duzce_Risk_Degerlendirme.apk
