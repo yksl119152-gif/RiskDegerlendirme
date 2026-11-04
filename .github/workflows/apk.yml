@@ -13,11 +13,14 @@ jobs:
     steps:
       - name: Depoyu al
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Zip dosyasini ac
         run: |
-          ZIP=$(ls *.zip | head -1)
-          echo "Bulunan zip: $ZIP"
+          # Depoda birden fazla zip varsa EN SON YUKLENENI kullan (dosya adi ne olursa olsun)
+          ZIP=$(for f in *.zip; do echo "$(git log -1 --format=%ct -- "$f") $f"; done | sort -n | tail -1 | cut -d' ' -f2-)
+          echo "Kullanilan zip (en son yuklenen): $ZIP"
           unzip -o -q "$ZIP" -d proje
           DIZIN=$(dirname "$(find proje -name settings.gradle | head -1)")
           echo "PROJE=$DIZIN" >> $GITHUB_ENV
