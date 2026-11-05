@@ -40,17 +40,28 @@ jobs:
         run: |
           cd "$PROJE"
           gradle assembleDebug --no-daemon --stacktrace
-          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/Duzce_Risk_Degerlendirme.apk"
+          mkdir -p "$GITHUB_WORKSPACE/cikti"
+          # Projede kac uygulama varsa hepsini anlasilir adlarla kopyala
+          for f in $(find app/build/outputs/apk -name '*.apk'); do
+            case "$f" in
+              */isg/*) AD=ISG_2026.apk ;;
+              */gys/*) AD=YOK_GYS_2026.apk ;;
+              *)       AD=Duzce_Risk_Degerlendirme.apk ;;
+            esac
+            cp "$f" "$GITHUB_WORKSPACE/cikti/$AD"
+            echo "Hazir: $AD"
+          done
+          ls -la "$GITHUB_WORKSPACE/cikti"
 
       - name: APK'yi Actions sayfasina koy
         uses: actions/upload-artifact@v4
         with:
-          name: Duzce_Risk_Degerlendirme_APK
-          path: Duzce_Risk_Degerlendirme.apk
+          name: APK
+          path: cikti/*.apk
 
       - name: APK'yi Releases sayfasina koy (dogrudan indirme)
         uses: softprops/action-gh-release@v2
         with:
           tag_name: surum-${{ github.run_number }}
-          name: Risk Degerlendirme APK ${{ github.run_number }}
-          files: Duzce_Risk_Degerlendirme.apk
+          name: APK ${{ github.run_number }}
+          files: cikti/*.apk
